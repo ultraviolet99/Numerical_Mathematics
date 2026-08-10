@@ -16,7 +16,6 @@
 \renewcommand{\textfraction}{0.07}
 \renewcommand{\floatpagefraction}{0.75}
  
-\newcommand{\dopolni}[1]{\textcolor{red}{\textbf{[DOPOLNI: #1]}}}
 \newcommand{\slikaali}[2]{\IfFileExists{#1}{\includegraphics[width=#2\linewidth]{#1}}%
   {\dopolni{sliko \texttt{\detokenize{#1}} ustvari \texttt{vizualizacije.py}}}}
 \lstset{language=Python,basicstyle=\ttfamily\small,frame=single,breaklines=true,
