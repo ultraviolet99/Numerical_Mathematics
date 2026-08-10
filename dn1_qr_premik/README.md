@@ -23,11 +23,9 @@ lastne, V = eigen(A, EnojniPremik(), vektorji=True)    # + lastni vektorji (stol
 ```bash
 pip install -e ".[dev]"   # namestitev z orodji za razvoj
 pytest
-pytest --cov=dn1_qr_premik --cov-report=term-missing   
-pytest --cov 
-pytest --cov-branch
+pytest --cov=dn1_qr_premik --cov-branch --cov-report=term-missing
 ```
-Pokritost: 100% stavkov in 100% vej.
+Pokritost: 100 % stavkov in 100 % vej.
 
 ## Demo skripta
 
