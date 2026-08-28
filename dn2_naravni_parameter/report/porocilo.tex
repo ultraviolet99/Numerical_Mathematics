@@ -1,0 +1,222 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[slovene]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage[margin=2.6cm]{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{placeins}
+
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.75}
+
+\newcommand{\slikaali}[2]{\IfFileExists{#1}{\includegraphics[width=#2\linewidth]{#1}}%
+  {\dopolni{sliko \texttt{\detokenize{#1}} ustvari \texttt{vizualizacije.py}}}}
+\lstset{language=Python,basicstyle=\ttfamily\small,frame=single,breaklines=true,
+        showstringspaces=false}
+
+\title{Domača naloga 2:\\ Naravni parameter krivulje}
+\author{Urban Vesel}
+\date{29. avgust 2026}
+
+\begin{document}
+\maketitle
+
+\section{Opis problema}
+
+Za krivuljo $(x, y) = (t^3 - t,\; t^2 - 1)$ iščemo naravni parameter
+\begin{equation}
+  s(t) = \int_0^t \sqrt{\dot x(\tau)^2 + \dot y(\tau)^2}\,\mathrm d\tau
+       = \int_0^t \underbrace{\sqrt{9\tau^4 - 2\tau^2 + 1}}_{g(\tau)}\,\mathrm d\tau .
+\end{equation}
+Naloga zahteva relativno natančnost pod $5\cdot 10^{-11}$ za \emph{vse}
+argumente in čas izračuna, omejen s konstanto, neodvisno od $t$. Diskriminanta
+kvadratne enačbe $9y^2 - 2y + 1 = 0$ (z $y = \tau^2$) je negativna, zato je
+$g > 0$ na vsej realni osi (minimum $g^2 = 8/9$ pri $\tau^2 = 1/9$); $s$ je
+liha, gladka in strogo naraščajoča. Slika~\ref{fig:krivulja} kaže, kaj naravni
+parameter pomeni geometrijsko: enakomeren korak v $s$ ustreza enakomernemu
+koraku po dolžini krivulje, ne po parametru $t$, zato so pike na sliki gosto
+razporejene tam, kjer je hitrost $g(\tau)$ majhna (blizu $\tau^2 = 1/9$), in redkeje
+tam, kjer je hitra.
+
+\begin{figure}[htb]\centering
+  \slikaali{slike/krivulja.png}{0.5}
+  \caption{Krivulja s točkami na enakomernih ločnih razdaljah, dobljenimi z
+  bisekcijo po $s$. Zanka nastane, ker $x(\tau)$ ni injektivna ($x(-1)=x(1)=0$),
+  na naravni parameter to ne vpliva, saj $s$ šteje prehojeno pot, ne lego točke.}
+  \label{fig:krivulja}
+\end{figure}
+
+\section{Metoda}
+
+Rešitev ima dve veji, ločeni pri $T_0 = 3$.
+
+\subsection{Majhni argumenti: Gauss--Legendrova kvadratura}
+
+Za $|t| \le T_0$ izračunamo $s(t)$ z Gauss--Legendrovo kvadraturo reda
+$n = 60$ na $[0, t]$; vozle poiščemo z Newtonovo metodo na $P_n$
+(tričlenska rekurenca), uteži so $w_i = 2 / \bigl((1-x_i^2) P_n'(x_i)^2\bigr)$,
+vse pa izračunamo enkrat in predpomnimo.
+
+Hitrost konvergence krmilijo kompleksne singularnosti integranda: razvejišča
+$g$ so ničle polinoma $9\tau^4 - 2\tau^2 + 1$, torej
+\begin{equation}
+  \tau_s = \pm\frac{\sqrt 2 \pm i}{3}, \qquad |\tau_s| = \tfrac{1}{\sqrt 3}.
+\end{equation}
+Za funkcijo, analitično znotraj Bernsteinove elipse $E_\rho$ okoli intervala,
+napaka kvadrature pada kot $O(\rho^{-2n})$~\cite{atap}. Preslikava
+$[0, T_0] \to [-1, 1]$ da za najbližje razvejišče $\rho \approx 1{,}34$, torej
+pri $n = 60$ oceno $\rho^{-120} \approx 6\cdot 10^{-16}$; empirično potrditev
+kaže slika~\ref{fig:konvgl}. Za $|t| < T_0$ se interval skrči in konvergenca
+je kvečjemu hitrejša, relativna natančnost pa se ohrani, ker napaka skalira z
+dolžino intervala.
+
+\subsection{Veliki argumenti: asimptotika in interpolacija}
+
+Z binomsko vrsto za $g(\tau) = 3\tau^2\sqrt{1 + z}$,
+$z = -\tfrac{2}{9}\tau^{-2} + \tfrac{1}{9}\tau^{-4}$, dobimo
+\begin{align}
+  g(\tau) &= 3\tau^2 - \tfrac13 + \tfrac{4}{27}\tau^{-2}
+             + \tfrac{4}{243}\tau^{-4} + O(\tau^{-6}),\\
+  s(t) &= t^3 - \tfrac{t}{3} + C - \tfrac{4}{27}t^{-1}
+          - \tfrac{4}{729}t^{-3} + \tfrac{4}{10935}t^{-5} + \cdots
+\end{align}
+s konstanto $C = \lim_{t\to\infty}\bigl(s(t) - t^3 + t/3\bigr)$. Ključna
+substitucija je
+\begin{equation}
+  h(u) := u^3\, s(1/u)
+        = 1 - \tfrac{u^2}{3} + C u^3 - \tfrac{4}{27}u^4
+          - \tfrac{4}{729}u^6 - \cdots, \qquad u \in [0, 1/T_0],
+\end{equation}
+ki je gladko razširljiva do $u=0$ s $h(0)=1$; konstante $C$ zato sploh ni
+treba poznati. Ker je $s(t) = t^3\, h(1/t)$ in $|h| \approx 1$, relativna
+napaka interpolanta $h$ neposredno omeji relativno napako $s$.
+
+Funkcijo $h$ interpoliramo s polinomom stopnje $M = 40$ v Čebiševih
+točkah druge vrste na $[0, 1/T_0]$; vrednosti $h(u_j)$ dobimo s sestavljeno
+kvadraturo na $[0, T_0]$ in $[T_0, 1/u_j]$ (enojna kvadratura \v{c}ez celoten
+interval pri majhnih $u_j$ ne konvergira, ker so singularnosti preblizu
+izhodi\v{s}\v{c}a), koeficiente z diskretno kosinusno transformacijo, vrednotenje pa s
+Clenshawovim algoritmom (povratno stabilen, napaka $O(M\epsilon\sum|c_k|)$).
+Singularnosti $h$ v spremenljivki $u$ so pri $u_s = 1/\tau_s = \sqrt2 \mp i$,
+kar da $\rho_u \approx 19$: koeficienti padajo za $\approx 1{,}3$ decimalke na
+indeks in pri $k \approx 12$ dosežejo plato natančnosti vhodnih vrednosti
+(slika~\ref{fig:koef}) --- izbrani $M$ je velika varnostna rezerva.
+
+\subsection{Cena klica in robni primeri}
+
+Priprava (vozli, koeficienti) je enkratna; vsak klic je nato ena kvadratura
+fiksnega reda ali en Clenshaw fiksne stopnje, torej $O(1)$
+(slika~\ref{fig:cas}). Lihost obravnavamo z $s(-t) = -s(t)$; $s(0)=0$;
+za $|t| \gtrsim 5{,}6\cdot 10^{102}$ vrednost $t^3$ prekorači obseg
+\texttt{float64} in funkcija naravno vrne \texttt{inf}.
+
+\section{Rezultati}
+
+\begin{figure}[htb]\centering
+  \slikaali{slike/konv_gl.png}{0.48}\hfill
+  \slikaali{slike/cheb_koef.png}{0.48}
+  \caption{Levo: napaka kvadrature za $s(3)$ v odvisnosti od reda $n$ s
+  teoretičnim naklonom $\rho^{-2n}$. Desno: padanje $|c_k|$ s platojem.
+  Obe krivulji do platoja lepo sledita ocenama $\rho \approx 1{,}34$ in
+  $\rho_u \approx 19$: kvadratura doseže strojno natančnost že pri $n \approx
+  48$, koeficienti $|c_k|$ pa pri $k \approx 12$, kar se ujema z napovedjo
+  $\log_{10}19 \approx 1,3$ decimalke na koeficient, $\approx 12$ koeficientov do strojne natančnosti. 
+  Izbrani $n = 60$ in
+  $M = 40$ sta zato precej nad potrebnim minimumom, kar pusti udobno rezervo
+  za morebitne manj ugodne argumente.}
+  \label{fig:konvgl}
+\end{figure}
+\begin{figure}[htb]\centering
+  \slikaali{slike/singularnosti.png}{0.48}\hfill
+  \slikaali{slike/napaka.png}{0.48}
+  \caption{Levo: razvejišča $g$ in Bernsteinova elipsa $E_{1,34}$ za $[0,
+  T_0]$. Najbližji dve (desni) ležita tik ob robu elipse in določata $\rho$.
+  Desno: relativna napaka proti referenci \texttt{mpmath} čez obe veji na 33
+  točkah med $t = 10^{-2}$ in $t = 10^{8}$. Največja izmerjena napaka je
+  $1{,}5\cdot 10^{-14}$ pri $t \approx 2050$, kar je približno 3600-krat pod
+  zahtevanih $5\cdot 10^{-11}$ (rdeča črta). Napaka na prehodu pri $T_0$ (črtkana
+  navpičnica) ne izstopa, kar potrjuje, da se veji ujemata gladko.
+  Točka pri $t \approx 27$ leži na spodnjem robu
+  $10^{-17}$, ker je tam odstopanje od reference točno nič.}
+  \label{fig:koef}
+\end{figure}
+\begin{figure}[htb]\centering
+  \slikaali{slike/cas.png}{0.55}
+  \caption{Čas na klic (najkrajši od petih ponovitev po 200 klicev, 
+  po ogrevanju predpomnilnikov) je
+  za vse preizkušene argumente od $t=1$ do $t=10^{12}$. Razmerje
+  med najpočasnejšim in najhitrejšim klicem je $1{,}16$, kar potrjuje ceno
+  $O(1)$.}
+  \label{fig:cas}
+\end{figure}
+
+Neposredno pri $T_0$ smo veji preverili tudi ročno: za $\varepsilon =
+10^{-6}$ je $s(T_0+\varepsilon) - s(T_0-\varepsilon) = 5{,}337\cdot 10^{-5}$,
+kar se ujema z $2\varepsilon\,g(T_0) = 5{,}337\cdot 10^{-5}$ na vsa izpisana
+mesta. Preglednica~\ref{tab:vrednosti} podaja še nekaj vrednosti $s(t)$ na 12
+mest; te vrednosti so v testih uporabljene tudi kot regresijske (izračunane
+enkrat pri zamrznjenih $T_0, N_{GL}, M$, brez ponovnega klica oraklja ob vsakem
+zagonu testov).
+
+\begin{table}[htb]\centering
+\begin{tabular}{rl}
+\toprule
+$t$ & $s(t)$ \\ \midrule
+$0{,}5$      & $0{,}486143800457$ \\
+$1$          & $1{,}35779593032$ \\
+$3\ (=T_0)$  & $26{,}7946672491$ \\
+$5$          & $124{,}147911541$ \\
+$1000$       & $999999667{,}511$ \\
+$10^{8}$     & $1{,}00000000000\cdot 10^{24}$ \\
+\bottomrule
+\end{tabular}
+\caption{Vrednosti naravnega parametra za nekaj argumentov. Pri $t=1000$ je
+razlika do $t^3 = 10^9$ vidna na sedmem mestu ($332{,}489$), kar se ujema z
+vodilnim popravkom $-t/3 \approx -333{,}3$; pri $t=10^8$ je popravek reda
+$10^{-17}$ relativno in se ne vidi več na 12 izpisanih mestih.}
+\label{tab:vrednosti}
+\end{table}
+
+\section{Primer uporabe}
+
+Klic je enake oblike ne glede na velikost argumenta. Katero vejo
+funkcija uporabi in kako draga je bila priprava zanjo, ostane skrito:
+
+\begin{lstlisting}
+from dn2_naravni_parameter import s
+s(2.5)      # kvadraturna veja       -> 15.576312
+s(1e9)      # interpolacijska veja   -> 1.000000e+27, strosek
+\end{lstlisting}
+
+\section{Zaključek}
+
+Naravni parameter $s(t)$ smo izračunali z Gauss--Legendrovo kvadraturo za
+$|t| \le T_0$ in s Čebiševo interpolacijo funkcije $h(u) = u^3 s(1/u)$ za
+$|t| > T_0$, kar ceno klica omeji na $O(1)$ ne glede na velikost argumenta.
+Na 33 testnih točkah med $t=10^{-2}$ in $t=10^{8}$ je največje odstopanje od
+reference \texttt{mpmath} $1{,}5\cdot 10^{-14}$, kar je precej pod zahtevano
+mejo $5\cdot 10^{-11}$, enako velja na prehodu med vejama pri $T_0$. Edina
+prava omejitev je preliv \texttt{float64} pri $|t| \gtrsim 5{,}6\cdot
+10^{102}$, kjer $t^3$ zraste čez obseg tipa in funkcija vrne \texttt{inf}.
+Za realne argumente te velikosti to ni pomanjkljivost algoritma. Ker
+koeficienti $|c_k|$ dosežejo plato že pri $k \approx 12$, bi $M_{CHEB}$ lahko
+brez izgube natančnosti precej znižali. Pustili smo ga pri $40$ zaradi
+varnostne rezerve, cena priprave pa je tako ali tako enkratna.
+
+\begin{thebibliography}{9}
+\bibitem{atap} L.~N. Trefethen, \emph{Approximation Theory and Approximation
+  Practice}, SIAM, 2013, pogl.~8 in~19.
+\bibitem{gw} G.~H. Golub, J.~H. Welsch, Calculation of Gauss quadrature
+  rules, \emph{Math.\ Comp.}\ 23 (1969).
+\bibitem{skripta} M.~Vuk, \emph{Numerična matematika v programskem jeziku
+  Julia}, 2025, nalogi~18.2.6 in~18.2.7.
+\end{thebibliography}
+
+\end{document}
