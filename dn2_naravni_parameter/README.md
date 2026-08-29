@@ -3,7 +3,7 @@
 **Avtor:** Urban Vesel
 
 Izračun naravnega parametra (ločne dolžine) s(t) parametrične krivulje
-(x, y) = (t³ − t, t² − 1) z relativno natančnostjo 5·10⁻¹¹ za vse argumente in
+(x, y) = (t³ - t, t² - 1) z relativno natančnostjo 5e-11 za vse argumente in
 s časovno zahtevnostjo, omejeno s konstanto: Gauss-Legendrove kvadrature za
 zmerne t in Čebiševa interpolacija funkcije u -> u³ s(1/u) za velike t.
 
