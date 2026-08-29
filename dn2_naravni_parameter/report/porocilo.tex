@@ -193,13 +193,15 @@ $10^{-17}$ relativno in se ne vidi več na 12 izpisanih mestih.}
 
 \section{Primer uporabe}
 
-Klic je enake oblike ne glede na velikost argumenta. Katero vejo
-funkcija uporabi in kako draga je bila priprava zanjo, ostane skrito:
+Klic je enake oblike ne glede na velikost argumenta in traja enako dolgo
+(slika~\ref{fig:cas}), 
+čeprav se pri velikih $t$ izvede po drugi veji.
+Katero vejo funkcija uporabi in kako draga je bila priprava zanjo, ostane skrito:
 
 \begin{lstlisting}
 from dn2_naravni_parameter import s
 s(2.5)      # kvadraturna veja       -> 15.576312
-s(1e9)      # interpolacijska veja   -> 1.000000e+27, strosek
+s(1e9)      # interpolacijska veja   -> 1.000000e+27
 \end{lstlisting}
 
 \section{Zaključek}
