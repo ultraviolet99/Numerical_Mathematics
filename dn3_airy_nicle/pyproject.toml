@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dn3-airy-nicle"
+version = "0.1.0"
+description = "DN3 (18.3.1): nicle Airyjeve funkcije z Magnusovo metodo reda 4"
+requires-python = ">=3.11"
+dependencies = ["numpy>=1.26"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-cov>=5", "matplotlib>=3.8", "scipy>=1.13"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

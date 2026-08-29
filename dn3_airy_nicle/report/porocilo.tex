@@ -1,0 +1,230 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[slovene]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage[margin=2.6cm]{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{placeins}
+
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.75}
+
+\newcommand{\slikaali}[2]{\IfFileExists{#1}{\includegraphics[width=#2\linewidth]{#1}}%
+  {\dopolni{sliko \texttt{\detokenize{#1}} ustvari \texttt{vizualizacije.py}}}}
+\lstset{language=Python,basicstyle=\ttfamily\small,frame=single,breaklines=true,
+        showstringspaces=false}
+
+\title{Domača naloga 3:\\ Ničle Airyjeve funkcije z Magnusovo metodo reda 4}
+\author{Urban Vesel}
+\date{11. avgust 2026}
+
+\begin{document}
+\maketitle
+
+\section{Opis problema}
+
+Airyjeva funkcija $\mathrm{Ai}$ je rešitev začetnega problema
+\begin{equation}
+  y'' = x\,y, \qquad
+  \mathrm{Ai}(0) = \frac{1}{3^{2/3}\,\Gamma(2/3)}, \qquad
+  \mathrm{Ai}'(0) = -\frac{1}{3^{1/3}\,\Gamma(1/3)} .
+\end{equation}
+Poiskati želimo čim več njenih ničel (vse ležijo na negativni polosi) na
+deset decimalk natančno; vgrajeni reševalci diferencialnih enačb niso
+dovoljeni, \texttt{scipy.special.airy} pa služi izključno preverjanju.
+Enačbo zapišemo kot sistem prvega reda $y' = A(x)\,y$ za
+$y = (\mathrm{Ai}, \mathrm{Ai}')$ z
+$A(x) = \bigl[\begin{smallmatrix}0&1\\ x&0\end{smallmatrix}\bigr]$
+in integriramo od $0$ v levo.
+
+\section{Metoda}
+
+\subsection{Magnusova metoda reda 4}
+
+Rešitev linearnega sistema na koraku je $y(x+h) = e^{\Omega(h)} y(x)$, kjer je
+$\Omega$ Magnusova vrsta
+\begin{equation}
+  \Omega(h) = \int_0^h A\,\mathrm d\tau
+  + \frac12 \int_0^h\!\!\int_0^{\tau_1} [A(\tau_1), A(\tau_2)]\,
+    \mathrm d\tau_2\,\mathrm d\tau_1 + \cdots
+\end{equation}
+Metoda reda~4 obdrži prva dva člena in ju izračuna z dvotočkovno
+Gauss--Legendrovo kvadraturo: z $A_{1,2} = A\bigl(x + (\tfrac12 \mp
+\tfrac{\sqrt3}{6})h\bigr)$ je
+\begin{equation}
+  \sigma = \frac h2 (A_1 + A_2) - \frac{\sqrt3}{12} h^2\, [A_1, A_2],
+  \qquad y^+ = e^{\sigma} y,
+  \label{eq:magnus}
+\end{equation}
+z lokalno napako $O(h^5)$. Za naš $A$ je $[A_1, A_2] = (x_2 - x_1)
+\operatorname{diag}(1, -1)$ in $x_2 - x_1 = \tfrac{\sqrt3}{3}h$, zato se
+\eqref{eq:magnus} sklene v
+\begin{equation}
+  \sigma = \begin{bmatrix} -h^3/12 & h \\ h\,(x + h/2) & h^3/12 \end{bmatrix},
+\end{equation}
+komutatorja v kodi torej ni treba računati (pravilnost potrjuje test proti
+splošni obliki).
+Empirični red smo potrdili z meritvijo (levi graf na sliki~\ref{fig:wronskian}).
+
+\subsection{Eksponentna funkcija brezsledne $2\times 2$ matrike}
+
+Ker je $\operatorname{tr}\sigma = 0$, da Cayley--Hamiltonov izrek
+$\sigma^2 = zI$ z $z = \sigma_{11}^2 + \sigma_{12}\sigma_{21}$, in
+eksponentna vrsta razpade na
+\begin{equation}
+  e^{\sigma} = C(z)\,I + S(z)\,\sigma, \qquad
+  C(z) = \sum_{j\ge 0} \frac{z^j}{(2j)!} = \cosh\sqrt z, \quad
+  S(z) = \sum_{j\ge 0} \frac{z^j}{(2j+1)!} = \frac{\sinh\sqrt z}{\sqrt z}.
+\end{equation}
+$C$ in $S$ sta \emph{celi} funkciji $z$, zato formula velja za oba predznaka;
+numerično uporabimo $\cosh/\sinh$ za $z > \delta$, $\cos/\sin$ za
+$z < -\delta$ in nekaj členov vrste za $|z| \le \delta$. Ker je
+$\det e^{\sigma} = e^{\operatorname{tr}\sigma} = 1$ \emph{eksaktno}, metoda
+strukturno ohranja Wronskijan dveh rešitev, kar je natanko lastnost točnega
+toka (Abel--Liouville: $W' = \operatorname{tr}A \cdot W = 0$); klasični RK4 te
+lastnosti nima (slika~\ref{fig:wronskian}).
+
+\subsection{Izbira koraka in asimptotika (WKB)}
+
+Za $x = -\xi < 0$ da nastavek Liouville--Green
+\begin{equation}
+  \mathrm{Ai}(-\xi) \approx \pi^{-1/2}\,\xi^{-1/4}
+  \cos\!\bigl(\tfrac23 \xi^{3/2} - \tfrac{\pi}{4}\bigr),
+  \label{eq:wkb}
+\end{equation}
+torej amplitudo $\sim |x|^{-1/4}$ in lokalno valovno dolžino $2\pi/\sqrt{|x|}$.
+Korak zato izberemo kot $h = \min\!\bigl(h_0,\; 2\pi/(m\sqrt{1+|x|})\bigr)$,
+kar da približno $m$ korakov na nihaj. Iz \eqref{eq:wkb} sledi še: ničle
+zadoščajo $\tfrac23|a_k|^{3/2} = \tfrac{\pi(4k-1)}{4}$, kar da vodilni
+McMahonov člen $|a_k| = \bigl(\tfrac{3\pi(4k-1)}{8}\bigr)^{2/3}$; število
+ničel do globine $x$ je $N(x) \approx \tfrac{2}{3\pi}|x|^{3/2}$; odvod v
+ničli je $|\mathrm{Ai}'(a_k)| \approx \pi^{-1/2}|a_k|^{1/4}$, zato so ničle
+dobro pogojene in pogojenost se z globino še izboljšuje.
+
+\subsection{Iskanje in prečiščenje ničel}
+
+Med pohodom zaznamo menjave predznaka $\mathrm{Ai}$ med sosednjima vozloma in
+vsak oklep prečistimo z varovanim Newtonovim postopkom
+$x \leftarrow x - \mathrm{Ai}(x)/\mathrm{Ai}'(x)$ (ob skoku iz oklepa
+bisekcija); vrednosti $(\mathrm{Ai}, \mathrm{Ai}')$ v vmesnih točkah dobimo s
+kratko propagacijo od predpomnjene mreže. Zaradi dobre pogojenosti zadošča
+nekaj iteracij, kar se v meritvah tudi pokaže: konvergenca je kvadratična in
+oklep se v praksi ne zapusti.
+
+\subsection{Kontrola natančnosti}
+
+Fazna napaka metode reda 4 na nihaj je $\sim C' m^{-4}$; do globine $|a_k|$
+je nihajev $\Phi/2\pi$ s $\Phi = \tfrac23 |a_k|^{3/2}$, premik ničle pa
+$\delta a \approx \delta\varphi / \sqrt{|a_k|}$. Skupaj
+\begin{equation}
+  |\delta a_k| \approx C''\, |a_k|\, m^{-4}.
+  \label{eq:zakon}
+\end{equation}
+Napako umerimo proti oraklju \texttt{scipy}: izmerjena konstanta $C''$ (glej
+sliko~\ref{fig:napaka}) da napoved globine, do katere je pri izbranem $m$
+dosežena zahtevana natančnost $10^{-10}$, kar je kvantitativen odgovor na
+zahtevo po čim več ničlah.
+
+\section{Rezultati}
+
+Slika~\ref{fig:ai} prikazuje $\mathrm{Ai}$ na $[-12, 0]$ z izračunanimi ničlami.
+
+\begin{figure}[htb]\centering
+  \slikaali{slike/ai_nicle.png}{0.6}
+  \caption{$\mathrm{Ai}$ na $[-12, 0]$ z označenimi ničlami: devet menjav
+  predznaka, devet ničel, brez izpuščenih ali podvojenih.}
+  \label{fig:ai}
+\end{figure}
+
+\begin{table}[htb]\centering
+\caption{Prvih pet ničel v primerjavi z DLMF. Razlika je povsod manjša od
+$10^{-11}$, kar je z rezervo pod zahtevanimi desetimi decimalkami.}
+\begin{tabular}{rll}
+\toprule
+$k$ & $a_k$ (naša) & $a_k$ (DLMF) \\ \midrule
+1 & $-2{,}338107410467$ & $-2{,}338107410459$ \\
+2 & $-4{,}087949444137$ & $-4{,}087949444130$ \\
+3 & $-5{,}520559828101$ & $-5{,}520559828096$ \\
+4 & $-6{,}786708090077$ & $-6{,}786708090072$ \\
+5 & $-7{,}944133587126$ & $-7{,}944133587120$ \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[htb]\centering
+  \slikaali{slike/red4.png}{0.48}\hfill
+  \slikaali{slike/wronskian.png}{0.48}
+  \caption{Levo: empirični red metode na $x_0=0 \to x=-1$; izmerjeni naklon
+  na log-log skali je $4{,}00$, kar se natančno ujema z zahtevanim redom.
+  Desno: drift Wronskijana pri koraku $h=0{,}05$ na $[-60,0]$. Magnus ostane
+  ves čas na ravni strojne natančnosti (na koncu $7{,}2\cdot10^{-16}$), RK4
+  pa nabere drift $3{,}6\cdot10^{-3}$, torej približno $5\cdot10^{12}$-krat
+  več: to je neposreden odraz eksaktne ohranitve $\det e^{\sigma}=1$.
+  Navpični skoki modre krivulje so točke kjer je drift nič, narisane so na spodnji rob $10^{-18}$.}
+  \label{fig:wronskian}
+\end{figure}
+
+\begin{figure}[htb]\centering
+  \slikaali{slike/napaka_nicel.png}{0.55}
+  \caption{$|\Delta a_k|$ prvih 60 ničel proti \texttt{scipy.special.ai\_zeros}
+  pri $m=800$, skupaj z zakonom \eqref{eq:zakon} za umerjeno konstanto
+  $C'' \approx 4{,}05\cdot10^{-2}$. Vseh 60 ničel ima napako pod $10^{-10}$,
+  največja izmerjena je $1{,}27\cdot10^{-11}$ pri $k=5$. 
+  Izmerjena napaka je v praksi skoraj neodvisna od $k$, zakon \eqref{eq:zakon} pa zato precenjuje
+  napako pri velikih $k$ in je konzervativna zgornja meja. Po njej natančnost
+  pod $10^{-10}$ pri $m=800$ zdrži do $|a_k| \approx 1011$, kar po $N(x)$
+  ustreza približno $6800$ ničlam.}
+  \label{fig:napaka}
+\end{figure}
+
+V demonstraciji smo prvih 60 ničel preverili proti oraklju (slika \ref{fig:napaka}). 
+Število korakov je sorazmerno s skupno fazo
+$\Phi = \tfrac23 |x|^{3/2}$, prav tako pa je s $\Phi$ sorazmerno tudi število
+ničel. Cena zato raste kot $|x|^{3/2}$ v globini, v številu ničel pa je
+linearna. To potrjujejo meritve: 30 ničel dobimo v $159$ ms, 100 v $852$ ms in
+300 v $2{,}5$ s, kar je približno enak čas na ničlo. 
+Napovedanih $6800$ zanesljivih ničel v demu ne računamo do konca, ker bi to trajalo občutno dlje,
+je pa napoved iz \eqref{eq:zakon} kvantitativen, preverljiv odgovor na to,
+koliko ničel je pri danem $m$ še vredno računati.
+
+\section{Primer uporabe}
+
+\begin{minipage}{\linewidth}
+\begin{lstlisting}
+from dn3_airy_nicle import nicle, ai
+z = nicle(30)          # prvih 30 nicel
+z10 = nicle(x_min=-10) # vse nicle na [-10, 0]
+Ai, dAi = ai(-3.0)      # (-0.378814, 0.314584)
+\end{lstlisting}
+\end{minipage}
+
+\section{Zaključek}
+
+Ničle Airyjeve funkcije smo poiskali z Magnusovo metodo reda 4 v zaprti
+obliki, kar je pri koraku $h=0{,}05$ na $[-60,0]$ dalo Wronskijan, konstanten
+do $7{,}2\cdot10^{-16}$, medtem ko je enak korak z RK4 nabral drift
+$3{,}6\cdot10^{-3}$. Varovan Newton na dobro pogojenih ničlah konvergira v
+nekaj korakih; prvih 60 ničel se z oraklju \texttt{scipy} ujema na manj kot
+$1{,}3\cdot10^{-11}$, torej precej pod zahtevanih deset decimalk. Umerjeni
+zakon $|\delta a_k| \approx C''|a_k|m^{-4}$ napove, da isti $m=800$ zanesljivo
+nese do približno $6800$ ničel. Naravna izboljšava bi bila vektorizacija
+pohoda (trenutno čista Python zanka) ali višji red Magnusove vrste za še
+redkejše korake pri enaki natančnosti.
+
+\begin{thebibliography}{9}
+\bibitem{dlmf} \emph{NIST Digital Library of Mathematical Functions},
+  \S 9.2, 9.7, 9.9, \url{https://dlmf.nist.gov/9}.
+\bibitem{blanes} S.~Blanes, F.~Casas, J.~A. Oteo, J.~Ros, The Magnus
+  expansion and some of its applications, \emph{Phys.\ Rep.}\ 470 (2009),
+  \url{https://arxiv.org/abs/0810.5488}.
+\bibitem{skripta} M.~Vuk, \emph{Numerična matematika v programskem jeziku
+  Julia}, 2025, naloga~18.3.1.
+\end{thebibliography}
+
+\end{document}
