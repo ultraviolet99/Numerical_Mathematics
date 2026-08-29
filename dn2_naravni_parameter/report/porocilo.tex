@@ -55,7 +55,13 @@ tam, kjer je hitra.
 
 \section{Metoda}
 
-Rešitev ima dve veji, ločeni pri $T_0 = 3$.
+Rešitev ima dve veji, ločeni pri $T_0 = 3$. 
+Ta meja je kompromis, saj večji $T_0$
+podaljša integracijski interval in zniža $\rho$, zato kvadratura potrebuje več
+vozlov, manjši $T_0$ pa podaljša interpolacijski interval $[0, 1/T_0]$ 
+in zniža $\rho_u$, zato potrebuje interpolant višjo stopnjo. Pri izbrani meji obe veji
+dosežeta strojno natančnost z zmernima $n$ in $M$, kar ceno klica ohrani majhno.
+
 
 \subsection{Majhni argumenti: Gauss--Legendrova kvadratura}
 
@@ -71,7 +77,8 @@ $g$ so ničle polinoma $9\tau^4 - 2\tau^2 + 1$, torej
 \end{equation}
 Za funkcijo, analitično znotraj Bernsteinove elipse $E_\rho$ okoli intervala,
 napaka kvadrature pada kot $O(\rho^{-2n})$~\cite{atap}. Preslikava
-$[0, T_0] \to [-1, 1]$ da za najbližje razvejišče $\rho \approx 1{,}34$, torej
+$[0, T_0] \to [-1, 1]$ da za najbližje razvejišče $\rho \approx 1{,}34$, 
+torej
 pri $n = 60$ oceno $\rho^{-120} \approx 6\cdot 10^{-16}$; empirično potrditev
 kaže slika~\ref{fig:konvgl}. Za $|t| < T_0$ se interval skrči in konvergenca
 je kvečjemu hitrejša, relativna natančnost pa se ohrani, ker napaka skalira z
@@ -105,7 +112,7 @@ interval pri majhnih $u_j$ ne konvergira, ker so singularnosti preblizu
 izhodi\v{s}\v{c}a), koeficiente z diskretno kosinusno transformacijo, vrednotenje pa s
 Clenshawovim algoritmom (povratno stabilen, napaka $O(M\epsilon\sum|c_k|)$).
 Singularnosti $h$ v spremenljivki $u$ so pri $u_s = 1/\tau_s = \sqrt2 \mp i$,
-kar da $\rho_u \approx 19$: koeficienti padajo za $\approx 1{,}3$ decimalke na
+kar da $\rho_u \approx 19$. Koeficienti padajo za $\approx 1{,}3$ decimalke na
 indeks in pri $k \approx 12$ dosežejo plato natančnosti vhodnih vrednosti
 (slika~\ref{fig:koef}). Izbrani $M$ je velika varnostna rezerva.
 
@@ -129,7 +136,7 @@ za $|t| \gtrsim 5{,}6\cdot 10^{102}$ vrednost $t^3$ prekorači obseg
   48$, koeficienti $|c_k|$ pa pri $k \approx 12$, kar se ujema z napovedjo
   $\log_{10}19 \approx 1,3$ decimalke na koeficient, in $15/\log_{10}19 \approx 12$ koeficientov do strojne natančnosti. 
   Izbrani $n = 60$ in
-  $M = 40$ sta zato precej nad potrebnim minimumom, kar pusti udobno rezervo
+  $M = 40$ sta zato precej nad potrebnim minimumom. To pusti udobno rezervo
   za morebitne manj ugodne argumente.}
   \label{fig:konvgl}
 \end{figure}
