@@ -23,7 +23,7 @@
 
 \title{Domača naloga 3:\\ Ničle Airyjeve funkcije z Magnusovo metodo reda 4}
 \author{Urban Vesel}
-\date{30. avgust 2026}
+\date{1. september 2026}
 
 \begin{document}
 \maketitle
@@ -35,9 +35,12 @@ Airyjeva funkcija $\mathrm{Ai}$ je rešitev začetnega problema
   y'' = x\,y, \qquad
   \mathrm{Ai}(0) = \frac{1}{3^{2/3}\,\Gamma(2/3)}, \qquad
   \mathrm{Ai}'(0) = -\frac{1}{3^{1/3}\,\Gamma(1/3)} .
-\end{equation}
-Poiskati želimo čim več njenih ničel (vse ležijo na negativni polosi) na
-deset decimalk natančno; vgrajeni reševalci diferencialnih enačb niso
+\end{equation} 
+Vrednosti $\mathrm{Ai}(0)$ in $\mathrm{Ai}'(0)$ sta zapisani v zaprti obliki
+v \cite[razdelka 9.2.3 in 9.2.4]{dlmf}. Ker funkcija $\Gamma$ ni elementarna,
+ju v kodi hranimo kot konstanti, zaokroženi na dvajset mest.
+Naloga~\cite{skripta} zahteva, da poiščemo čim več njenih ničel (vse ležijo
+na negativni polosi) na deset decimalk natančno; vgrajeni reševalci diferencialnih enačb niso
 dovoljeni, \texttt{scipy.special.airy} pa služi izključno preverjanju.
 Enačbo zapišemo kot sistem prvega reda $y' = A(x)\,y$ za
 $y = (\mathrm{Ai}, \mathrm{Ai}')$ z
@@ -49,21 +52,29 @@ in integriramo od $0$ v levo.
 \subsection{Magnusova metoda reda 4}
 
 Rešitev linearnega sistema na koraku je $y(x+h) = e^{\Omega(h)} y(x)$, kjer je
-$\Omega$ Magnusova vrsta
+$\Omega$ Magnusova vrsta \cite{blanes}. Ta izraža logaritem propagatorja kot
+vsoto členov, pri katerih $k$-ti prispeva $O(h^k)$; prvi je integral matrike,
+drugi pa popravek, ki meri, koliko $A$ v različnih točkah komutira med seboj:
 \begin{equation}
   \Omega(h) = \int_0^h A\,\mathrm d\tau
   + \frac12 \int_0^h\!\!\int_0^{\tau_1} [A(\tau_1), A(\tau_2)]\,
     \mathrm d\tau_2\,\mathrm d\tau_1 + \cdots
 \end{equation}
-Metoda reda~4 obdrži prva dva člena in ju izračuna z dvotočkovno
-Gauss--Legendrovo kvadraturo: z $A_{1,2} = A\bigl(x + (\tfrac12 \mp
-\tfrac{\sqrt3}{6})h\bigr)$ je
+Metoda reda~4 iz \cite{skripta} obdrži prva dva člena in ju izračuna z
+dvotočkovno Gauss--Legendrovo kvadraturo, ki je točna za polinome stopnje
+$\le 3$. Skrajšanje vrste bi samo po sebi dalo red~2, vendar je nastali
+postopek časovno simetričen: korak $h$ in za njim korak $-h$ vrneta izhodiščno
+stanje. Simetrični postopki imajo sod red, zato se red dvigne s~3 na~4.
+Z $A_{1,2} = A\bigl(x + (\tfrac12 \mp \tfrac{\sqrt3}{6})h\bigr)$ je
 \begin{equation}
   \sigma = \frac h2 (A_1 + A_2) - \frac{\sqrt3}{12} h^2\, [A_1, A_2],
   \qquad y^+ = e^{\sigma} y,
   \label{eq:magnus}
 \end{equation}
-z lokalno napako $O(h^5)$. Za naš $A$ je $[A_1, A_2] = (x_2 - x_1)
+z lokalno napako $O(h^5)$. 
+Izmerjeni red je $4{,}00$ (levi graf na sliki~\ref{fig:wronskian}), kar potrjuje
+zgornjo oceno.
+Za naš $A$ je $[A_1, A_2] = (x_2 - x_1)
 \operatorname{diag}(1, -1)$ in $x_2 - x_1 = \tfrac{\sqrt3}{3}h$, zato se
 \eqref{eq:magnus} sklene v
 \begin{equation}
@@ -71,13 +82,14 @@ z lokalno napako $O(h^5)$. Za naš $A$ je $[A_1, A_2] = (x_2 - x_1)
 \end{equation}
 komutatorja v kodi torej ni treba računati (pravilnost potrjuje test proti
 splošni obliki).
-Empirični red smo potrdili z meritvijo (levi graf na sliki~\ref{fig:wronskian}).
 
 \subsection{Eksponentna funkcija brezsledne $2\times 2$ matrike}
 
 Ker je $\operatorname{tr}\sigma = 0$, da Cayley--Hamiltonov izrek
 $\sigma^2 = zI$ z $z = \sigma_{11}^2 + \sigma_{12}\sigma_{21}$, in
-eksponentna vrsta razpade na
+eksponentna vrsta razpade na sodi in lihi del. Iz $\sigma^2 = zI$ namreč sledi
+$\sigma^{2j} = z^j I$ in $\sigma^{2j+1} = z^j \sigma$, zato se sode potence
+seštejejo v večkratnik identitete, lihe pa v večkratnik $\sigma$:
 \begin{equation}
   e^{\sigma} = C(z)\,I + S(z)\,\sigma, \qquad
   C(z) = \sum_{j\ge 0} \frac{z^j}{(2j)!} = \cosh\sqrt z, \quad
@@ -93,27 +105,33 @@ lastnosti nima (slika~\ref{fig:wronskian}).
 
 \subsection{Izbira koraka in asimptotika (WKB)}
 
-Za $x = -\xi < 0$ da nastavek Liouville--Green
+Za $x = -\xi < 0$ enačba preide v $y'' = -\xi y$, torej v nihanje s počasi
+spreminjajočo se frekvenco $\sqrt\xi$. Nastavek Liouville--Green
+$y = \xi^{-1/4} e^{\pm i S(\xi)}$ s fazo $S' = \sqrt\xi$ enačbi zadosti do
+relativnega $O(\xi^{-3/2})$ in da \cite[razdelek 9.7.9]{dlmf}
 \begin{equation}
   \mathrm{Ai}(-\xi) \approx \pi^{-1/2}\,\xi^{-1/4}
   \cos\!\bigl(\tfrac23 \xi^{3/2} - \tfrac{\pi}{4}\bigr),
   \label{eq:wkb}
-\end{equation}
+\end{equation} 
 torej amplitudo $\sim |x|^{-1/4}$ in lokalno valovno dolžino $2\pi/\sqrt{|x|}$.
 Korak zato izberemo kot $h = \min\!\bigl(h_0,\; 2\pi/(m\sqrt{1+|x|})\bigr)$,
-kar da približno $m$ korakov na nihaj. Iz \eqref{eq:wkb} sledi še: ničle
-zadoščajo $\tfrac23|a_k|^{3/2} = \tfrac{\pi(4k-1)}{4}$, kar da vodilni
-McMahonov člen $|a_k| = \bigl(\tfrac{3\pi(4k-1)}{8}\bigr)^{2/3}$; število
-ničel do globine $x$ je $N(x) \approx \tfrac{2}{3\pi}|x|^{3/2}$; odvod v
-ničli je $|\mathrm{Ai}'(a_k)| \approx \pi^{-1/2}|a_k|^{1/4}$, zato so ničle
-dobro pogojene in pogojenost se z globino še izboljšuje.
+kar da približno $m$ korakov na nihaj. Iz \eqref{eq:wkb} sledijo še tri
+uporabne posledice. Ničle nastopijo tam, kjer je kosinus enak nič, torej pri
+$\tfrac23|a_k|^{3/2} = \tfrac{\pi(4k-1)}{4}$; od tod vodilni McMahonov člen
+$|a_k| = \bigl(\tfrac{3\pi(4k-1)}{8}\bigr)^{2/3}$ \cite[razdelek 9.9.6]{dlmf},
+s katerim ocenimo, kako globoko moramo integrirati. Ker faza narašča z
+$\tfrac23|x|^{3/2}$, je ničel do globine $x$ približno
+$N(x) \approx \tfrac{2}{3\pi}|x|^{3/2}$. Odvod v ničli je
+$|\mathrm{Ai}'(a_k)| \approx \pi^{-1/2}|a_k|^{1/4}$ in z globino narašča, zato
+so ničle dobro pogojene in Newtonov postopek hitro konvergira.
 
 \subsection{Iskanje in prečiščenje ničel}
 
 Med pohodom zaznamo menjave predznaka $\mathrm{Ai}$ med sosednjima vozloma in
 vsak oklep prečistimo z varovanim Newtonovim postopkom
 $x \leftarrow x - \mathrm{Ai}(x)/\mathrm{Ai}'(x)$ (ob skoku iz oklepa
-bisekcija); vrednosti $(\mathrm{Ai}, \mathrm{Ai}')$ v vmesnih točkah dobimo s
+bisekcija). Vrednosti $(\mathrm{Ai}, \mathrm{Ai}')$ v vmesnih točkah dobimo s
 kratko propagacijo od predpomnjene mreže. Zaradi dobre pogojenosti zadošča
 nekaj iteracij, kar se v meritvah tudi pokaže: konvergenca je kvadratična in
 oklep se v praksi ne zapusti.
@@ -176,10 +194,10 @@ $k$ & $a_k$ (naša) & $a_k$ (DLMF) \\ \midrule
   pri $m=800$, skupaj z zakonom \eqref{eq:zakon} za umerjeno konstanto
   $C'' \approx 4{,}05\cdot10^{-2}$. Vseh 60 ničel ima napako pod $10^{-10}$,
   največja izmerjena je $1{,}27\cdot10^{-11}$ pri $k=5$. 
-  Izmerjena napaka je v praksi skoraj neodvisna od $k$, zakon \eqref{eq:zakon} pa zato precenjuje
-  napako pri velikih $k$ in je konzervativna zgornja meja. Po njej natančnost
-  pod $10^{-10}$ pri $m=800$ zdrži do $|a_k| \approx 1011$, kar po $N(x)$
-  ustreza približno $6800$ ničlam.}
+  Izmerjena napaka z naraščajočim $k$ celo rahlo pada (od $7{,}2\cdot10^{-12}$
+  pri $k=1$ na $2{,}1\cdot10^{-12}$ pri $k=60$), medtem ko zakon
+  \eqref{eq:zakon} predvideva rast sorazmerno z $|a_k|$. Zakon je torej
+  konzervativna zgornja meja.}
   \label{fig:napaka}
 \end{figure}
 
