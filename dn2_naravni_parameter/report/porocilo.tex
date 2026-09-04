@@ -35,15 +35,16 @@ Za krivuljo $(x, y) = (t^3 - t,\; t^2 - 1)$ iščemo naravni parameter
   s(t) = \int_0^t \sqrt{\dot x(\tau)^2 + \dot y(\tau)^2}\,\mathrm d\tau
        = \int_0^t \underbrace{\sqrt{9\tau^4 - 2\tau^2 + 1}}_{g(\tau)}\,\mathrm d\tau .
 \end{equation}
-Naloga zahteva relativno natančnost pod $5\cdot 10^{-11}$ za \emph{vse}
+Naloga \cite{skripta} zahteva relativno natančnost pod $5\cdot 10^{-11}$ za \emph{vse}
 argumente in čas izračuna, omejen s konstanto, neodvisno od $t$. Diskriminanta
 kvadratne enačbe $9y^2 - 2y + 1 = 0$ (z $y = \tau^2$) je negativna, zato je
 $g > 0$ na vsej realni osi (minimum $g^2 = 8/9$ pri $\tau^2 = 1/9$); $s$ je
 liha, gladka in strogo naraščajoča. Slika~\ref{fig:krivulja} kaže, kaj naravni
-parameter pomeni geometrijsko: enakomeren korak v $s$ ustreza enakomernemu
-koraku po dolžini krivulje, ne po parametru $t$, zato so pike na sliki gosto
-razporejene tam, kjer je hitrost $g(\tau)$ majhna (blizu $\tau^2 = 1/9$), in redkeje
-tam, kjer je hitra.
+parameter pomeni geometrijsko. Pike na krivulji so razporejene na enakomernih
+ločnih razdaljah, torej enakomerno po dolžini krivulje in ne po parametru $t$.
+Ustrezni parametri $t$ zato niso enakomerni: tam, kjer je odvod po parametru
+majhen (blizu $\tau^2 = 1/9$), se $t$ med sosednjima pikama spremeni za več kot
+tam, kjer je odvod velik.
 
 \begin{figure}[htb]\centering
   \slikaali{slike/krivulja.png}{0.5}
@@ -66,12 +67,19 @@ dosežeta strojno natančnost z zmernima $n$ in $M$, kar ceno klica ohrani majhn
 \subsection{Majhni argumenti: Gauss--Legendrova kvadratura}
 
 Za $|t| \le T_0$ izračunamo $s(t)$ z Gauss--Legendrovo kvadraturo reda
-$n = 60$ na $[0, t]$. Vozli kvadrature so ničle Legendrovega polinoma $P_n$. Ničle poiščemo z Newtonovo metodo, pri čemer vrednosti $P_n$ računamo s tročlensko rekurzivno enačbo (referenca na wikipedijo npr. ali drugo literaturo, kjer so opisani Legendrovi polinomi). 
-(tričlenska rekurenca), uteži so $w_i = 2 / \bigl((1-x_i^2) P_n'(x_i)^2\bigr)$,
-vse pa izračunamo enkrat in predpomnimo.
+$n = 60$ na $[0, t]$. Vozli kvadrature so ničle Legendrovega polinoma $P_n$,
+uteži pa so $w_i = 2 / \bigl((1-x_i^2) P_n'(x_i)^2\bigr)$~\cite{gw}. Ničle
+poiščemo z Newtonovo metodo, pri čemer vrednosti $P_n$ in $P_{n-1}$ računamo
+s tričlensko rekurzivno zvezo
+$k P_k(x) = (2k-1)\,x\,P_{k-1}(x) - (k-1)\,P_{k-2}(x)$, odvod pa iz
+$P_n'(x) = n\,\bigl(x P_n(x) - P_{n-1}(x)\bigr)/(x^2-1)$. Vozle in uteži
+izračunamo enkrat in predpomnimo.
 
-Napako Gauss-Legendrove kvadrature lahko navzgor ocenimo s pomočjo teorije analitičnih funkcij, kot je opisano v \cite{atap}. Hitrost konvergence krmilijo kompleksne singularnosti integranda: razvejišča
-$g$ so ničle polinoma $9\tau^4 - 2\tau^2 + 1$, torej
+
+Napako Gauss--Legendrove kvadrature lahko navzgor ocenimo s pomočjo teorije
+analitičnih funkcij~\cite{gauss}. Hitrost, s katero napaka pada z redom $n$,
+krmilijo kompleksne singularnosti integranda: 
+razvejišča $g$ so ničle polinoma $9\tau^4 - 2\tau^2 + 1$, torej
 \begin{equation}
   \tau_s = \pm\frac{\sqrt 2 \pm i}{3}, \qquad |\tau_s| = \tfrac{1}{\sqrt 3}.
 \end{equation}
@@ -86,42 +94,50 @@ dolžino intervala.
 
 \subsection{Veliki argumenti: asimptotika in interpolacija}
 
-Z binomsko vrsto za $g(\tau) = 3\tau^2\sqrt{1 + z}$,
-$z = -\tfrac{2}{9}\tau^{-2} + \tfrac{1}{9}\tau^{-4}$, dobimo
+Za velike $|\tau|$ izpostavimo $g(\tau) = 3\tau^2\sqrt{1 + z}$ z
+$z = -\tfrac{2}{9}\tau^{-2} + \tfrac{1}{9}\tau^{-4}$ in koren razvijemo po
+binomski vrsti. Vrsta konvergira enakomerno na $[T_0, t]$, zato jo smemo
+integrirati po členih, kar da
 \begin{align}
   g(\tau) &= 3\tau^2 - \tfrac13 + \tfrac{4}{27}\tau^{-2}
              + \tfrac{4}{243}\tau^{-4} + O(\tau^{-6}),\\
   s(t) &= t^3 - \tfrac{t}{3} + C - \tfrac{4}{27}t^{-1}
           - \tfrac{4}{729}t^{-3} + \tfrac{4}{10935}t^{-5} + \cdots
 \end{align}
-s konstanto $C = \lim_{t\to\infty}\bigl(s(t) - t^3 + t/3\bigr)$. Ključna
-substitucija je
+s konstanto $C = \lim_{t\to\infty}\bigl(s(t) - t^3 + t/3\bigr)$.
+
+Interpolirati funkcijo $s$ na neskončnem intervalu $[T_0, \infty)$ ni mogoče,
+zato naredimo inverzijo s substitucijo $u = 1/t$, ki ta interval preslika na
+končnega, $u \in (0, 1/T_0]$. Sama $s(1/u)$ pri $u \to 0$ raste čez vse meje,
+saj se obnaša kot $u^{-3}$, zato jo pomnožimo z $u^3$ in definiramo
 \begin{equation}
   h(u) := u^3\, s(1/u)
         = 1 - \tfrac{u^2}{3} + C u^3 - \tfrac{4}{27}u^4
-          - \tfrac{4}{729}u^6 - \cdots, \qquad u \in [0, 1/T_0],
+          - \tfrac{4}{729}u^6 + \cdots, \qquad u \in (0, 1/T_0].
 \end{equation}
-ki je gladko razširljiva do $u=0$ s $h(0)=1$; konstante $C$ zato sploh ni
-treba poznati. Ker je $s(t) = t^3\, h(1/t)$ in $|h| \approx 1$, relativna
-napaka interpolanta $h$ neposredno omeji relativno napako $s$.
+Desna stran je potenčna vrsta brez pola, zato ima $h$ pri $u = 0$ odpravljivo
+singularnost in jo lahko zvezno razširimo z $h(0) = 1$; to je limita
+$\lim_{u\to 0} u^3 s(1/u)$, saj vodilni člen $s(t) \sim t^3$ z $u^3$ ravno
+okrajšamo. Tako razširjena $h$ je na $[0, 1/T_0]$ gladka in primerna za
+polinomsko interpolacijo. Konstante $C$ pri tem ni treba poznati, ker je
+vsebovana v interpolantu. Ker je $s(t) = t^3\, h(1/t)$ in $|h| \approx 1$,
+relativna napaka interpolanta $h$ neposredno omeji relativno napako $s$.
 
-Funkcijo $h$ interpoliramo s polinomom stopnje $M = 40$ v Čebiševih
-točkah druge vrste na $[0, 1/T_0]$; vrednosti $h(u_j)$ dobimo tako, da $s(t)$ izračunamo s sestavljeno
-kvadraturo na $[0, T_0]$ in $[T_0, 1/u_j]$ (enojna kvadratura \v{c}ez celoten
-interval pri majhnih $u_j$ ne konvergira, ker so singularnosti preblizu
-izhodi\v{s}\v{c}a), koeficiente z diskretno kosinusno transformacijo, vrednotenje pa s
-Clenshawovim algoritmom (povratno stabilen, napaka $O(M\epsilon\sum|c_k|)$).
-Singularnosti $h$ v spremenljivki $u$ so pri $u_s = 1/\tau_s = \sqrt2 \mp i$,
-kar da $\rho_u \approx 19$. Koeficienti padajo za $\approx 1{,}3$ decimalke na
-indeks in pri $k \approx 12$ dosežejo plato natančnosti vhodnih vrednosti
-(slika~\ref{fig:koef}). Izbrani $M$ je velika varnostna rezerva.
+Funkcijo $h$ interpoliramo s polinomom stopnje $M = 40$ v Čebiševih točkah
+druge vrste na $[0, 1/T_0]$. Vrednosti $h(u_j) = u_j^3\, s(1/u_j)$ dobimo
+tako, da $s(1/u_j)$ izračunamo s sestavljeno kvadraturo: interval razdelimo na
+$[0, T_0]$ in $[T_0, 1/u_j]$ ter na vsakem uporabimo kvadraturo reda $n$.
+Enojna kvadratura čez celoten interval pri majhnih $u_j$ ne konvergira, ker so
+singularnosti glede na dolžino intervala preblizu izhodišča. Koeficiente nato
+izračunamo z diskretno kosinusno transformacijo, vrednotimo pa s Clenshawovim
+algoritmom, ki je povratno stabilen z napako $O(M\epsilon\sum|c_k|)$.
 
 \subsection{Cena klica in robni primeri}
 
 Priprava (vozli, koeficienti) je enkratna; vsak klic je nato ena kvadratura
 fiksnega reda ali en Clenshaw fiksne stopnje, torej $O(1)$
-(slika~\ref{fig:cas}). Lihost obravnavamo z $s(-t) = -s(t)$; $s(0)=0$;
-za $|t| \gtrsim 5{,}6\cdot 10^{102}$ vrednost $t^3$ prekorači obseg
+(slika~\ref{fig:cas}). Lihost obravnavamo z $s(-t) = -s(t)$, pri $t=0$ vrnemo $0$. 
+Za $|t| \gtrsim 5{,}6\cdot 10^{102}$ vrednost $t^3$ prekorači obseg
 \texttt{float64} in funkcija naravno vrne \texttt{inf}.
 
 \section{Rezultati}
@@ -159,7 +175,7 @@ za $|t| \gtrsim 5{,}6\cdot 10^{102}$ vrednost $t^3$ prekorači obseg
   \caption{Čas na klic (najkrajši od petih ponovitev po 200 klicev, 
   po ogrevanju predpomnilnikov) je
   za vse preizkušene argumente od $t=1$ do $t=10^{12}$. Razmerje
-  med najpočasnejšim in najhitrejšim klicem je $1{,}16$, kar potrjuje ceno
+  med najpočasnejšim in najhitrejšim klicem je $1{,}20$, kar potrjuje ceno
   $O(1)$.}
   \label{fig:cas}
 \end{figure}
